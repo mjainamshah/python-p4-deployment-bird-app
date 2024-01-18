@@ -6,6 +6,8 @@ load_dotenv()
 from flask import Flask, jsonify, request, make_response, render_template
 from flask_migrate import Migrate
 from flask_restful import Api, Resource
+from flask_sqlalchemy import SQLAlchemy
+
 
 from models import db, Bird
 
@@ -15,10 +17,12 @@ app = Flask(
     static_folder='../client/build',
     template_folder='../client/build'
 )
-
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI')
+app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql://test_c98c_user:2kCsJvutpgZW7amhGSmHccYsq2kRwtJK@dpg-cmj403f109ks739pimng-a.oregon-postgres.render.com/test_c98c'
+#  os.environ.get('DATABASE_URI') or 
+# app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.json.compact = False
+# SQLALCHEMY_DATABASE_URI = 'postgres://test_c98c_user:2kCsJvutpgZW7amhGSmHccYsq2kRwtJK@dpg-cmj403f109ks739pimng-a.oregon-postgres.render.com/test_c98c'
 
 migrate = Migrate(app, db)
 db.init_app(app)
@@ -33,7 +37,9 @@ class Birds(Resource):
 
     def get(self):
         birds = [bird.to_dict() for bird in Bird.query.all()]
-        return make_response(jsonify(birds), 200)
+        # return make_response(jsonify(birds), 200)
+        return make_response(jsonify({'error': 'Bird not found'}), 404)
+
 
     def post(self):
 
@@ -55,8 +61,12 @@ api.add_resource(Birds, '/birds')
 class BirdByID(Resource):
     
     def get(self, id):
-        bird = Bird.query.filter_by(id=id).first().to_dict()
-        return make_response(jsonify(bird), 200)
+        bird = Bird.query.filter_by(id=id).first()
+        if bird:
+            return make_response(jsonify(bird.to_dict()), 200)
+        else:
+            return make_response(jsonify({'error': 'Bird not found'}), 404)
+
 
     def patch(self, id):
 
